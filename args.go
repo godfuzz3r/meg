@@ -20,8 +20,15 @@ func (h headerArgs) String() string {
 }
 
 type saveStatusArgs []int
+type ignoreStatusArgs []int
 
 func (s *saveStatusArgs) Set(val string) error {
+	i, _ := strconv.Atoi(val)
+	*s = append(*s, i)
+	return nil
+}
+
+func (s *ignoreStatusArgs) Set(val string) error {
 	i, _ := strconv.Atoi(val)
 	*s = append(*s, i)
 	return nil
@@ -31,7 +38,20 @@ func (s saveStatusArgs) String() string {
 	return "string"
 }
 
+func (s ignoreStatusArgs) String() string {
+	return "string"
+}
+
 func (s saveStatusArgs) Includes(search int) bool {
+	for _, status := range s {
+		if status == search {
+			return true
+		}
+	}
+	return false
+}
+
+func (s ignoreStatusArgs) Includes(search int) bool {
 	for _, status := range s {
 		if status == search {
 			return true
@@ -48,6 +68,7 @@ type config struct {
 	followLocation bool
 	method         string
 	saveStatus     saveStatusArgs
+	ignoreStatus   ignoreStatusArgs
 	timeout        int
 	verbose        bool
 
@@ -95,6 +116,11 @@ func processArgs() config {
 	var saveStatus saveStatusArgs
 	flag.Var(&saveStatus, "savestatus", "")
 	flag.Var(&saveStatus, "s", "")
+
+	// ignorestatus params
+	var ignoreStatus ignoreStatusArgs
+	flag.Var(&ignoreStatus, "ignoretatus", "")
+	flag.Var(&ignoreStatus, "i", "")
 
 	// timeout param
 	timeout := 10000
@@ -149,6 +175,7 @@ func processArgs() config {
 		followLocation: followLocation,
 		method:         method,
 		saveStatus:     saveStatus,
+		ignoreStatus:   ignoreStatus,
 		timeout:        timeout,
 		requester:      requesterFn,
 		verbose:        verbose,
@@ -167,16 +194,17 @@ func init() {
 		h += "  meg [path|pathsFile] [hostsFile] [outputDir]\n\n"
 
 		h += "Options:\n"
-		h += "  -b, --body <val>           Set the request body\n"
-		h += "  -c, --concurrency <val>    Set the concurrency level (default: 20)\n"
-		h += "  -d, --delay <millis>       Milliseconds between requests to the same host (default: 5000)\n"
-		h += "  -H, --header <header>      Send a custom HTTP header\n"
-		h += "  -L, --location             Follow redirects / location header\n"
-		h += "  -r, --rawhttp              Use the rawhttp library for requests (experimental)\n"
-		h += "  -s, --savestatus <status>  Save only responses with specific status code\n"
-		h += "  -t, --timeout <millis>     Set the HTTP timeout (default: 10000)\n"
-		h += "  -v, --verbose              Verbose mode\n"
-		h += "  -X, --method <method>      HTTP method (default: GET)\n\n"
+		h += "  -b, --body <val>            Set the request body\n"
+		h += "  -c, --concurrency <val>     Set the concurrency level (default: 20)\n"
+		h += "  -d, --delay <millis>        Milliseconds between requests to the same host (default: 5000)\n"
+		h += "  -H, --header <header>       Send a custom HTTP header\n"
+		h += "  -L, --location              Follow redirects / location header\n"
+		h += "  -r, --rawhttp               Use the rawhttp library for requests (experimental)\n"
+		h += "  -s, --savestatus <status>   Save only responses with specific status code\n"
+		h += "  -i, --ignorestatus <status> Ignore responses with specific status code\n"
+		h += "  -t, --timeout <millis>      Set the HTTP timeout (default: 10000)\n"
+		h += "  -v, --verbose               Verbose mode\n"
+		h += "  -X, --method <method>       HTTP method (default: GET)\n\n"
 
 		h += "Defaults:\n"
 		h += "  pathsFile: ./paths\n"

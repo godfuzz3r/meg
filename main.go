@@ -87,18 +87,21 @@ func main() {
 			if len(c.saveStatus) > 0 && !c.saveStatus.Includes(res.statusCode) {
 				continue
 			}
+			if len(c.ignoreStatus) > 0 && c.ignoreStatus.Includes(res.statusCode) {
+				continue
+			}
 
 			if res.err != nil {
 				fmt.Fprintf(os.Stderr, "request failed: %s\n", res.err)
 				continue
 			}
 
-			path, err := res.save(c.output, c.noHeaders)
+			//path, err := res.save(c.output, c.noHeaders)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to save file: %s\n", err)
 			}
 
-			line := fmt.Sprintf("%s %s (%s)\n", path, res.request.URL(), res.status)
+			line := fmt.Sprintf("%s (%s) %d\n", res.request.URL(), res.status, len(res.String()))
 			fmt.Fprintf(index, "%s", line)
 			if c.verbose {
 				fmt.Printf("%s", line)
@@ -120,7 +123,7 @@ func main() {
 				continue
 			}
 			prefixedPath := u.Path + path
-			u.Path = ""
+			u.Path = "/"
 
 			// stripping off a path means we need to
 			// rebuild the host portion too
